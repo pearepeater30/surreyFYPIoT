@@ -16,7 +16,6 @@ import struct
 import time
 import config
 import CCS811
-
 # initialize LoRa in LORAWAN mode.
 # Please pick the region that matches where you are using the device:
 # Asia = LoRa.AS923
@@ -27,8 +26,8 @@ lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.US915)
 
 # create an ABP authentication params
 dev_addr = struct.unpack(">l", binascii.unhexlify('26021BDB'))[0]
-nwk_swkey = binascii.unhexlify('E9A03143717AD90FA10960598EE73113')
-app_swkey = binascii.unhexlify('AB7E6610BA39A9A0B53FEB05460A7C12')
+nwk_swkey = binascii.unhexlify('E586B55742D93D496DC168E27C10F489')
+app_swkey = binascii.unhexlify('C8C85F35707D80F62C9A6BC3CB4D29F3')
 
 i2c = I2C(0)
 i2c = I2C(0, I2C.MASTER)
@@ -60,11 +59,18 @@ s.setblocking(False)
 
 # Data sent to the
 while True:
-    if ccs.data_ready():
-        data = ccs.eCO2
-        print(data)
-        pkt = str(data)
-        print('Sending:', pkt)
-        s.send(pkt)
-        time.sleep(4)
-        
+    try:
+        if ccs.data_ready():
+            data = ccs.eCO2
+            #Data to simulate facemask data from Raspberry Pi
+            totalPeople = int.from_bytes(os.urandom(1),"big")
+            maskedPeople = int.from_bytes(os.urandom(1),"big")
+            if maskedPeople > totalPeople:
+                maskedPeople = totalPeople
+            joinedData = str(data) + ',' + str(totalPeople) + ',' + str(maskedPeople)
+            print(joinedData)
+            print('Sending:', joinedData)
+            s.send(joinedData)
+            time.sleep(30)
+    except OSError:
+        pass
